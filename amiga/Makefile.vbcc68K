@@ -1,0 +1,136 @@
+# Makefile for zlib - WarpOS on Amiga PowerPC
+# Cross-compilation using vbcc and vlink
+# Copyright (C) 1995-2024 Jean-loup Gailly and Mark Adler
+# For conditions of distribution and use, see copyright notice in zlib.h
+
+# VBCC installation path - adjust to your setup
+# VBCC = /opt/vbcc  - VBCC is an env var on my system
+# NDK = /opt/ndk - I use NDK_INCLUDES for the NDK
+
+# Compiler and tools
+CC = $(VBCC)/bin/vc
+
+RM = rm -f
+
+# WarpOS target configuration
+TARGET = +aos68k-posix
+
+# Compiler flags for WarpOS PowerPC
+CFLAGS = $(TARGET) -c99 -inline-size=100 -c -cpu=68020 \
+	-I.. \
+	-DAMIGA
+
+# Library name
+LIBNAME = z.lib
+
+# Source directory (parent directory)
+SRCDIR = ..
+
+# Object files for core zlib library
+OBJS = adler32.o compress.o crc32.o gzclose.o gzlib.o gzread.o gzwrite.o \
+       uncompr.o deflate.o trees.o zutil.o inflate.o infback.o inftrees.o inffast.o
+
+# Test program objects
+TEST_OBJS = example.o minigzip.o
+
+# Default target
+all: $(LIBNAME)
+
+# Build the library by concatenating object files (AmigaOS hunk format)
+$(LIBNAME): $(OBJS)
+	cat $(OBJS) > $@
+
+# Test targets
+check: test
+test: example minigzip
+	./example
+	@echo "hello world" | ./minigzip | ./minigzip -d
+
+example: example.o $(LIBNAME)
+	$(CC) $(TARGET) -o $@ example.o $(LIBNAME) -L/opt/vbcc/targets/posix/lib -lposix -lamiga
+
+minigzip: minigzip.o $(LIBNAME)
+	$(CC) $(TARGET) -o $@ minigzip.o $(LIBNAME) -L/opt/vbcc/targets/posix/lib -lposix -lamiga
+
+# Compilation rules with explicit paths to parent directory
+adler32.o: $(SRCDIR)/adler32.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/adler32.c
+
+compress.o: $(SRCDIR)/compress.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/compress.c
+
+crc32.o: $(SRCDIR)/crc32.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/crc32.c
+
+deflate.o: $(SRCDIR)/deflate.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/deflate.c
+
+gzclose.o: $(SRCDIR)/gzclose.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/gzclose.c
+
+gzlib.o: $(SRCDIR)/gzlib.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/gzlib.c
+
+gzread.o: $(SRCDIR)/gzread.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/gzread.c
+
+gzwrite.o: $(SRCDIR)/gzwrite.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/gzwrite.c
+
+infback.o: $(SRCDIR)/infback.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/infback.c
+
+inffast.o: $(SRCDIR)/inffast.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/inffast.c
+
+inflate.o: $(SRCDIR)/inflate.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/inflate.c
+
+inftrees.o: $(SRCDIR)/inftrees.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/inftrees.c
+
+trees.o: $(SRCDIR)/trees.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/trees.c
+
+uncompr.o: $(SRCDIR)/uncompr.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/uncompr.c
+
+zutil.o: $(SRCDIR)/zutil.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/zutil.c
+
+# Test program compilation
+example.o: $(SRCDIR)/test/example.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/test/example.c
+
+minigzip.o: $(SRCDIR)/test/minigzip.c
+	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/test/minigzip.c
+
+# Clean targets
+mostlyclean: clean
+
+clean:
+	$(RM) *.o $(LIBNAME) example minigzip foo.gz
+
+distclean: clean
+	$(RM) *~
+
+# Dependencies
+adler32.o: $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/zutil.h
+compress.o: $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h
+crc32.o: $(SRCDIR)/crc32.h $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/zutil.h
+deflate.o: $(SRCDIR)/deflate.h $(SRCDIR)/zutil.h $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h
+example.o: $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h
+gzclose.o: $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/gzguts.h
+gzlib.o: $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/gzguts.h
+gzread.o: $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/gzguts.h
+gzwrite.o: $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/gzguts.h
+inffast.o: $(SRCDIR)/zutil.h $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/inftrees.h $(SRCDIR)/inflate.h $(SRCDIR)/inffast.h
+inflate.o: $(SRCDIR)/zutil.h $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/inftrees.h $(SRCDIR)/inflate.h $(SRCDIR)/inffast.h $(SRCDIR)/inffixed.h
+infback.o: $(SRCDIR)/zutil.h $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/inftrees.h $(SRCDIR)/inflate.h $(SRCDIR)/inffast.h $(SRCDIR)/inffixed.h
+inftrees.o: $(SRCDIR)/zutil.h $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/inftrees.h
+minigzip.o: $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h
+trees.o: $(SRCDIR)/deflate.h $(SRCDIR)/zutil.h $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h $(SRCDIR)/trees.h
+uncompr.o: $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h
+zutil.o: $(SRCDIR)/zutil.h $(SRCDIR)/zlib.h $(SRCDIR)/zconf.h
+
+.PHONY: all test check clean mostlyclean distclean

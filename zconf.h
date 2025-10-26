@@ -503,7 +503,7 @@ typedef uLong FAR uLongf;
 #  define Z_WANT64
 #endif
 
-#if !defined(SEEK_SET) && !defined(Z_SOLO)
+#if !defined(SEEK_SET) && !defined(Z_SOLO) && !defined(__VBCC__)
 #  define SEEK_SET        0       /* Seek from beginning of file.  */
 #  define SEEK_CUR        1       /* Seek from current position.  */
 #  define SEEK_END        2       /* Set file pointer to EOF plus "offset" */
